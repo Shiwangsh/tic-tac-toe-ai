@@ -22,8 +22,8 @@ def get_move():
     while True:
         try:
             # Ask the player for their move
-            move = input("Enter your move as 'row,col': ").strip()
-            row, col = map(int, move.split(','))
+            row = int(input("Enter row (0, 1, 2): "))
+            col = int(input("Enter column (0, 1, 2): "))
             
             # Validate the input
             if row in range(3) and col in range(3):
@@ -65,29 +65,79 @@ def is_draw(board):
     return True 
 
 
+def minimax(board, depth, is_maximizing):
+    winner = check_winner(board)
+    if winner == 'X':
+        return -1
+    elif winner == 'O':
+        return 1
+    elif is_draw(board):
+        return 0
+
+    if is_maximizing:
+        best_score = -float('inf')
+        for row in range(3):
+            for col in range(3):
+                if board[row][col] is None:
+                    board[row][col] = 'O'
+                    score = minimax(board, depth + 1, False)
+                    board[row][col] = None
+                    best_score = max(score, best_score)
+        return best_score
+    else:
+        best_score = float('inf')
+        for row in range(3):
+            for col in range(3):
+                if board[row][col] is None:
+                    board[row][col] = 'X'
+                    score = minimax(board, depth + 1, True)
+                    board[row][col] = None
+                    best_score = min(score, best_score)
+        return best_score
+
+def find_best_move(board):
+    best_score = -float('inf')
+    best_move = None
+    for row in range(3):
+        for col in range(3):
+            if board[row][col] is None:
+                board[row][col] = 'O'
+                score = minimax(board, 0, False)
+                board[row][col] = None
+                if score > best_score:
+                    best_score = score
+                    best_move = (row, col)
+    return best_move
+
+
+
 def tic_tac_toe():
     board = new_board()
-    current_player= "O"
+    current_player= "X"
 
     while True:
         render(board)
-        print(f"Player {current_player}'s turn")
-
-        # Get a valid move
-        while True: 
-            row, col = get_move()
-            if make_move(board, row, col, current_player):
-                break
-        # Check for winner
+        if current_player == 'X':
+            print("Player X's turn")
+            while True:
+                row, col = get_move()
+                if make_move(board, row, col, current_player):
+                    break
+        else:
+            print("AI's turn")
+            input("Press Enter for the AI to make it's move.")
+            move = find_best_move(board)
+            if move:
+                make_move(board, move[0], move[1], current_player)
         winner = check_winner(board)
-        if winner: 
+        if winner:
             render(board)
             print(f"Player {winner} wins!")
             break
         # Check for draw
         if is_draw(board):
             render(board)
-            print("The game is a draw! Play Again.")
+            print("The game is a draw!")
             break
         # Switch players
         current_player = "X" if current_player == "O" else "O"
